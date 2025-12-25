@@ -32,8 +32,7 @@ A modern, powerful, and easy-to-use **Prompt Manager** extension for [ComfyUI](h
     ```bash
     git clone https://github.com/colorAi/comfyui-prompt-manager.git
     ```
-    *(Note: Ensure the folder name is `Promptcollector`)*
-3.  **Restart ComfyUI**.
+   3.  **Restart ComfyUI**.
 
 ### 📖 Usage
 
@@ -84,8 +83,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
     ```bash
     git clone https://github.com/colorAi/comfyui-prompt-manager.git
     ```
-    *(注意：请确保文件夹名称为 `Promptcollector`)*
-3.  **重启 ComfyUI**。
+ 3.  **重启 ComfyUI**。
 
 ### 📖 使用指南
 
@@ -106,6 +104,10 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 -   `storage/未分类.json`
 
 ### 🤝 贡献与支持
+
+如果对你有帮助 点个⭐支持作者
+
+作者 HooTooH 哔站 https://space.bilibili.com/527601196?spm_id_from=333.1007.0.0
 
 欢迎提交 Pull Request 或 Issue 来帮助改进这个项目！
 
