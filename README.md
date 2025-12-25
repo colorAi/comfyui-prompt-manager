@@ -53,6 +53,10 @@ The extension stores data in the `storage/` directory inside its folder:
 
 ### 🤝 Contributing
 
+If this was helpful, please give the author a ⭐ to support them.
+
+Author: HooTooH Bilibili: https://space.bilibili.com/527601196?spm_id_from=333.1007.0.0
+
 Contributions are welcome! Please feel free to submit a Pull Request.
 
 ---
