@@ -1,0 +1,14 @@
+[project]
+name = "comfyui-prompt-manager"
+description = "A modern, powerful, and easy-to-use Prompt Manager extension for ComfyUI."
+version = "1.0.0"
+license = { file = "LICENSE.txt" }
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/hootoo/comfyui-prompt-manager"
+
+[tool.comfy]
+PublisherId = "hootoo"
+DisplayName = "ComfyUI Prompt Manager"
+Icon = ""
