@@ -9,7 +9,8 @@
 
 A modern, powerful, and easy-to-use **Prompt Manager** extension for [ComfyUI](https://github.com/comfyanonymous/ComfyUI). Organize your prompts, manage categories, and streamline your workflow with a sleek dashboard interface.
 
-<img width="2868" height="1305" alt="ScreenShot_2025-12-26_012603_843" src="https://github.com/user-attachments/assets/27f7c452-baac-4565-ae25-81a3d895f4ad" />
+<img width="2895" height="1811" alt="提示词11" src="https://github.com/user-attachments/assets/2302cb1d-cfa4-49a7-8c64-35103cb5afcb" />
+<img width="2895" height="1811" alt="提示词22" src="https://github.com/user-attachments/assets/c9a0893b-7a53-4612-807d-97d46e893276" />
 
 
 ### ✨ Features
