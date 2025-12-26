@@ -18,8 +18,8 @@ const STYLES = `
     align-items: center;
 }
 #prompt-manager-window {
-    width: 900px;
-    height: 700px;
+    width: 1100px;
+    height: 800px;
     background: #1e1e1e;
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
@@ -57,7 +57,7 @@ const STYLES = `
     transition: all 0.2s;
     font-size: 14px;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
 }
 .pm-category-item:hover {
@@ -76,6 +76,7 @@ const STYLES = `
     padding: 2px 6px;
     border-radius: 4px;
     transition: all 0.2s;
+    margin-left: auto;
 }
 .pm-category-item:hover .pm-cat-delete {
     opacity: 1;
@@ -103,11 +104,23 @@ const STYLES = `
 
 .pm-watermark {
     margin-top: 10px;
-    font-size: 10px;
-    color: #444;
+    font-size: 11px;
+    color: #888;
     text-align: center;
     padding-top: 10px;
     border-top: 1px solid #333;
+    font-weight: 500;
+}
+
+.pm-category-count {
+    font-size: 11px;
+    color: #666;
+    background: #2a2a2a;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-right: 8px;
+    min-width: 20px;
+    text-align: center;
 }
 
 #pm-main {
@@ -739,23 +752,30 @@ function render() {
                     <div class="pm-add-category" onclick="window.pmAddCategory()">+ 新建分类</div>
                     <div class="pm-category-list">
                         <div class="pm-category-item ${state.activeCategory === 'All' ? 'active' : ''}" onclick="window.pmSelectCategory('All')">
+                            <span class="pm-category-count">${state.prompts.length}</span>
                             <span>📂 全部 (All)</span>
                         </div>
                         
                         <!-- Uncategorized always visible if exists, or auto-added -->
-                        ${state.categories.filter(c => c === '未分类').map(cat => `
+                        ${state.categories.filter(c => c === '未分类').map(cat => {
+        const count = state.prompts.filter(p => p.category === cat).length;
+        return `
                             <div class="pm-category-item ${state.activeCategory === cat ? 'active' : ''}" onclick="window.pmSelectCategory('${cat}')">
+                                <span class="pm-category-count">${count}</span>
                                 <span>📁 ${cat}</span>
                             </div>
-                        `).join('')}
+                        `}).join('')}
 
                         <!-- Other categories -->
-                        ${state.categories.filter(c => c !== '未分类').map(cat => `
+                        ${state.categories.filter(c => c !== '未分类').map(cat => {
+            const count = state.prompts.filter(p => p.category === cat).length;
+            return `
                             <div class="pm-category-item ${state.activeCategory === cat ? 'active' : ''}" onclick="window.pmSelectCategory('${cat}')">
+                                <span class="pm-category-count">${count}</span>
                                 <span>${cat}</span>
                                 <div class="pm-cat-delete" title="删除分类" onclick="event.stopPropagation(); window.pmDeleteCategory('${cat}')">✕</div>
                             </div>
-                        `).join('')}
+                        `}).join('')}
                     </div>
                     <div class="pm-watermark">哔站 HooToo QQ交流群 543917943</div>
                 </div>
@@ -769,6 +789,7 @@ function render() {
                         <div class="pm-top-actions">
                             <button class="pm-btn" title="导出当前分类" onclick="window.handleExportClick()">📤 导出</button>
                             <button class="pm-btn" title="导入 JSON/TXT" onclick="window.handleImportClick()">📥 导入</button>
+                            <button class="pm-btn" title="添加节点到工作流" onclick="window.pmCreateNode()">➕ 节点</button>
                             <button class="pm-btn pm-btn-primary" onclick="window.pmOpenEditModal()">+ 新建</button>
                         </div>
                     </div>
@@ -790,6 +811,20 @@ function render() {
     // Expose helpers globally for inline onclick
     window.handleImportClick = handleImportClick;
     window.handleExportClick = handleExportClick;
+    window.pmCreateNode = function () {
+        if (!app.graph) {
+            showToast("⚠️ 工作流未初始化");
+            return;
+        }
+        const node = LiteGraph.createNode("PromptManagerNode");
+        if (!node) {
+            showToast("⚠️ 未找到节点类型: PromptManagerNode");
+            return;
+        }
+        node.pos = [window.scrollX + 200, window.scrollY + 200];
+        app.graph.add(node);
+        showToast("✅ 已添加节点");
+    };
 }
 
 function renderCards() {

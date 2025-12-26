@@ -243,8 +243,67 @@ async def batch_save(request):
     except Exception as e:
         return web.json_response({"status": "error", "message": str(e)}, status=500)
 
-NODE_CLASS_MAPPINGS = {}
-NODE_DISPLAY_NAME_MAPPINGS = {}
+
+# --- Nodes ---
+
+class PromptManagerNode:
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        # Load data dynamically for validation
+        data = get_all_data()
+        
+        categories = data.get("categories", ["未分类"])
+        # Ensure "All" is option if handled by frontend, though backend storage keys are what matters
+        # Frontend adds "All". Backend files don't satisfy "All". 
+        # But for validation, if frontend sends "All", we might need it.
+        # Actually frontend sends stored category name usually? 
+        # JS: updateCategoryWidget sets value to "All" or specific.
+        # If user selects "All", "All" is sent.
+        if "All" not in categories:
+            categories.insert(0, "All")
+            
+        prompts_data = data.get("prompts", [])
+        # Format must match JS: `[${p.id.slice(-4)}] ${p.title}`
+        prompts = []
+        for p in prompts_data:
+            pid = p.get("id", "")
+            title = p.get("title", "Untitled")
+            short_id = pid[-4:] if len(pid) >= 4 else pid
+            prompts.append(f"[{short_id}] {title}")
+            
+        if not prompts:
+            prompts = ["No prompts found"]
+
+        return {
+            "required": {
+                "category": (categories,),
+                "prompt": (prompts,),
+                "content": ("STRING", {"multiline": True, "dynamicPrompts": True}),
+            },
+        }
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("text",)
+    FUNCTION = "get_content"
+    CATEGORY = "utils"
+
+    # Bypass strict validation because the lists are dynamic on the frontend
+    @classmethod
+    def VALIDATE_INPUTS(cls, input_types):
+        return True
+
+    def get_content(self, category, prompt, content):
+        return (content,)
+
+NODE_CLASS_MAPPINGS = {
+    "PromptManagerNode": PromptManagerNode
+}
+NODE_DISPLAY_NAME_MAPPINGS = {
+    "PromptManagerNode": "Prompt Manager Node"
+}
 WEB_DIRECTORY = "./js"
 
 print("\033[34m[PromptCollector] \033[0mBackend (Import/Export Ready) loaded.")
