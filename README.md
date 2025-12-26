@@ -16,7 +16,7 @@ A modern, powerful, and easy-to-use **Prompt Manager** extension for [ComfyUI](h
 
 - **🎨 Modern Dashboard UI**: A beautiful, dark-themed floating interface that blends perfectly with ComfyUI.
 - **📂 Categorized Storage**: Organize your prompts into custom categories. Categories are stored as separate JSON files for performance and safety.
-- **💾 Persistent & Local**: All data is saved locally in `custom_nodes/Promptcollector/storage/`. No cloud dependencies.
+- **💾 Persistent & Local**: All data is saved locally in `ComfyUI/custom_nodes/comfyui-prompt-manager/storage/`. No cloud dependencies.
 - **📥 Batch Import**: Import prompts from `.json` or `.txt` files. Supports smart parsing (one prompt per line or paragraph).
 - **📤 Export & Share**: Export your prompt collections to JSON to share with the community or backup.
 - **📋 One-Click Copy**: Quickly copy prompts to your clipboard with a single click.
@@ -71,7 +71,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 - **🎨 现代仪表板 UI**：美观的暗色主题悬浮界面，与 ComfyUI 风格完美融合。
 - **📂 分类存储管理**：自定义分类整理提示词。每个分类存储为独立的 JSON 文件，确保性能和数据安全。
-- **💾 本地持久化**：所有数据均保存在本地 `custom_nodes/Promptcollector/storage/` 目录中，无云端依赖。
+- **💾 本地持久化**：所有数据均保存在本地 `ComfyUI/custom_nodes/comfyui-prompt-manager/storage/` 目录中，无云端依赖。
 - **📥 批量导入**：支持从 `.json` 或 `.txt` 文件导入提示词。支持智能解析（按行或段落识别）。
 - **📤 导出分享**：将分类下的提示词导出为 JSON 文件，方便备份或分享给社区。
 - **📋 一键复制**：点击即可快速将提示词复制到剪贴板。
