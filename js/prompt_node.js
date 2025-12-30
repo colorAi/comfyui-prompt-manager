@@ -44,24 +44,32 @@ app.registerExtension({
             if (category && category !== "All") {
                 filtered = filtered.filter(p => p.category === category);
             }
-            // Format for widget: "Title (ID)" or just Title if unique? 
-            // Let's use internal object mapping if possible, or just names.
-            // Widget expect list of strings.
-            // We'll store mapping in a temporary way or just lookup by title?
-            // Title might duplicate. Let's use "[ID] Title".
 
             const options = filtered.map(p => `[${p.id.slice(-4)}] ${p.title}`);
-            options.unshift("--- Select ---");
+            options.unshift("🎲 随机 (Random)");
             promptWidget.options.values = options;
-            promptWidget.value = "--- Select ---";
+            
+            // Smart Default: Keep existing if valid, else Random
+            const currentVal = promptWidget.value;
+            const isValid = currentVal && options.includes(currentVal) && currentVal !== "🎲 随机 (Random)" && currentVal !== "--- Select ---";
+            
+            if (isValid) {
+                promptWidget.value = currentVal;
+            } else {
+                promptWidget.value = "🎲 随机 (Random)";
+                // Auto-pick random
+                if (filtered.length > 0) {
+                    const randomP = filtered[Math.floor(Math.random() * filtered.length)];
+                    contentWidget.value = randomP.content;
+                } else {
+                    contentWidget.value = "";
+                }
+            }
         };
 
         // Helper: Find prompt object from string value
         const getPromptFromValue = (val) => {
-            if (!val || val === "--- Select ---") return null;
-            // val format: "[1234] Title"
-            // We really should use ID lookup.
-            // Let's try to match ID match.
+            if (!val || val === "--- Select ---" || val === "🎲 随机 (Random)") return null;
             const match = val.match(/^\[([a-zA-Z0-9]+)\]/);
             if (match) {
                 const shortId = match[1];
@@ -77,6 +85,19 @@ app.registerExtension({
 
         // Event: Prompt Changed
         promptWidget.callback = (val) => {
+            if (val === "🎲 随机 (Random)") {
+                 const category = categoryWidget.value;
+                 let filtered = allData.prompts;
+                 if (category && category !== "All") {
+                     filtered = filtered.filter(p => p.category === category);
+                 }
+                 if (filtered.length > 0) {
+                    const randomP = filtered[Math.floor(Math.random() * filtered.length)];
+                    contentWidget.value = randomP.content;
+                 }
+                 return;
+            }
+
             const p = getPromptFromValue(val);
             if (p) {
                 contentWidget.value = p.content;
@@ -94,7 +115,8 @@ app.registerExtension({
 
             const newContent = contentWidget.value;
             if (!newContent) {
-                alert("Content is empty!");
+                if (window.pmShowToast) window.pmShowToast("⚠️ 内容不能为空");
+                else alert("Content is empty!");
                 return;
             }
 
@@ -106,42 +128,59 @@ app.registerExtension({
                     body: JSON.stringify({ prompt: updated })
                 }).then(res => {
                     if (res.status === 200) {
-                        alert("Saved!");
+                        if (window.pmShowToast) window.pmShowToast("✅ 保存成功");
+                        else alert("Saved!");
                         // Refresh data
                         fetchData();
                     } else {
-                        alert("Error saving.");
+                        if (window.pmShowToast) window.pmShowToast("❌ 保存失败");
+                        else alert("Error saving.");
                     }
                 });
             } else {
-                // Save as new?
-                // For now, only update existing is requested "update saved template".
-                // But user might want to save new.
-                // Let's ask user name if new? Or just Alert "Select a prompt to update".
-                if (confirm("No existing prompt selected. Create new?")) {
-                    const name = prompt("Enter title for new prompt:", "New Prompt");
-                    if (name) {
-                        const cat = categoryWidget.value === "All" || categoryWidget.value === "Loading..." ? "未分类" : categoryWidget.value;
-                        const newP = {
-                            id: Date.now().toString(),
-                            title: name,
-                            category: cat,
-                            content: newContent,
-                            timestamp: Date.now()
-                        };
-                        api.fetchApi("/prompt_collector/prompt/save", {
-                            method: "POST",
-                            body: JSON.stringify({ prompt: newP })
-                        }).then(res => {
-                            if (res.status === 200) {
-                                alert("Created!");
-                                fetchData();
-                            } else {
-                                alert("Error creating.");
-                            }
-                        });
+                if (window.pmShowToast) window.pmShowToast("⚠️ 请先选择一个提示词，或使用新建按钮");
+                else alert("Please select a prompt to update, or use the '+' button to create a new one.");
+            }
+        });
+
+        // Add "+" Button for New Prompt
+        node.addWidget("button", "+ New Prompt", null, () => {
+            const newContent = contentWidget.value;
+            if (!newContent) {
+                if (window.pmShowToast) window.pmShowToast("⚠️ 内容不能为空");
+                else alert("Content is empty! Please enter some prompt text first.");
+                return;
+            }
+
+            const saveLogic = (name) => {
+                const cat = categoryWidget.value === "All" || categoryWidget.value === "Loading..." ? "未分类" : categoryWidget.value;
+                const newP = {
+                    id: Date.now().toString(),
+                    title: name,
+                    category: cat,
+                    content: newContent,
+                    timestamp: Date.now()
+                };
+                api.fetchApi("/prompt_collector/prompt/save", {
+                    method: "POST",
+                    body: JSON.stringify({ prompt: newP })
+                }).then(res => {
+                    if (res.status === 200) {
+                        if (window.pmShowToast) window.pmShowToast("✅ 创建成功");
+                        else alert("Created!");
+                        fetchData();
+                    } else {
+                        if (window.pmShowToast) window.pmShowToast("❌ 创建失败");
+                        else alert("Error creating.");
                     }
-                }
+                });
+            };
+
+            if (window.pmShowInput) {
+                window.pmShowInput("新建提示词", "请输入标题", saveLogic);
+            } else {
+                const name = prompt("Enter title for new prompt:", "New Prompt");
+                if (name) saveLogic(name);
             }
         });
 

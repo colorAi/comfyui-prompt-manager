@@ -114,7 +114,7 @@ const STYLES = `
 
 .pm-category-count {
     font-size: 11px;
-    color: #666;
+    color: #fff;
     background: #2a2a2a;
     padding: 2px 6px;
     border-radius: 10px;
@@ -807,24 +807,6 @@ function render() {
     overlay.onclick = (e) => {
         if (e.target.id === "prompt-manager-overlay") toggleWindow();
     };
-
-    // Expose helpers globally for inline onclick
-    window.handleImportClick = handleImportClick;
-    window.handleExportClick = handleExportClick;
-    window.pmCreateNode = function () {
-        if (!app.graph) {
-            showToast("⚠️ 工作流未初始化");
-            return;
-        }
-        const node = LiteGraph.createNode("PromptManagerNode");
-        if (!node) {
-            showToast("⚠️ 未找到节点类型: PromptManagerNode");
-            return;
-        }
-        node.pos = [window.scrollX + 200, window.scrollY + 200];
-        app.graph.add(node);
-        showToast("✅ 已添加节点");
-    };
 }
 
 function renderCards() {
@@ -849,7 +831,7 @@ function renderCards() {
     }
 
     return filtered.map(p => `
-        <div class="pm-card">
+        <div class="pm-card" draggable="true" ondragstart="window.pmCardDragStart(event, '${p.id}')" ondragend="window.pmCardDragEnd(event)">
             <div class="pm-card-title">${p.title}</div>
             <div class="pm-card-content">${p.content}</div>
             <div class="pm-card-actions">
@@ -1020,6 +1002,94 @@ window.pmEdit = (id) => {
     window.pmOpenEditModal(id);
 };
 
+window.pmCardDragStart = (e, id) => {
+    e.dataTransfer.setData("comfy-prompt-id", id);
+    e.dataTransfer.effectAllowed = "copy";
+    
+    // Hide overlay shortly after drag starts to allow ghost image creation
+    // and to let the underlying canvas receive dragover events
+    setTimeout(() => {
+        const overlay = document.getElementById("prompt-manager-overlay");
+        if (overlay) {
+            overlay.style.opacity = "0";
+            overlay.style.pointerEvents = "none";
+        }
+    }, 50);
+};
+
+window.pmCardDragEnd = (e) => {
+    const overlay = document.getElementById("prompt-manager-overlay");
+    if (overlay) {
+        overlay.style.opacity = "1";
+        overlay.style.pointerEvents = "auto";
+    }
+};
+
+function setupCanvasDropListener() {
+    const canvasEl = app.canvas.canvas;
+    if (!canvasEl) return;
+
+    canvasEl.addEventListener("dragover", (e) => {
+        if (e.dataTransfer.types.includes("comfy-prompt-id")) {
+            e.preventDefault(); // Allow drop
+        }
+    });
+
+    canvasEl.addEventListener("drop", (e) => {
+        const id = e.dataTransfer.getData("comfy-prompt-id");
+        if (!id) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const prompt = state.prompts.find(p => p.id === id);
+        if (!prompt) return;
+
+        // Create Node
+        const node = LiteGraph.createNode("PromptManagerNode");
+        if (!node) {
+            showToast("⚠️ 未找到节点类型: PromptManagerNode");
+            return;
+        }
+
+        node.pos = app.canvas.convertEventToCanvasOffset(e);
+        app.graph.add(node);
+
+        // Set Widgets
+        // Format: [abcd] Title
+        const shortId = prompt.id.length >= 4 ? prompt.id.slice(-4) : prompt.id;
+        const promptLabel = `[${shortId}] ${prompt.title}`;
+
+        // We try to set values. Note: The node's internal logic (prompt_node.js) 
+        // might overwrite this when it fetches data, but usually setting value works.
+        
+        // 1. Category
+        const catWidget = node.widgets.find(w => w.name === "category");
+        if (catWidget) {
+            catWidget.value = prompt.category;
+        }
+
+        // 2. Prompt Selector
+        const promptWidget = node.widgets.find(w => w.name === "prompt");
+        if (promptWidget) {
+            promptWidget.value = promptLabel;
+        }
+
+        // 3. Content
+        const contentWidget = node.widgets.find(w => w.name === "content");
+        if (contentWidget) {
+            contentWidget.value = prompt.content;
+        }
+        
+        showToast("✅ 已创建节点");
+        
+        // Close the window after successful drop
+        if (state.isOpen) {
+            toggleWindow();
+        }
+    });
+}
+
 // --- INITIALIZATION ---
 
 app.registerExtension({
@@ -1028,5 +1098,27 @@ app.registerExtension({
         console.log("Prompt Manager V3 Loaded");
         createStyles();
         createToggle();
+        setupCanvasDropListener();
+
+        // Expose helpers globally
+        window.handleImportClick = handleImportClick;
+        window.handleExportClick = handleExportClick;
+        window.pmShowInput = showInput;
+        window.pmShowConfirm = showConfirm;
+        window.pmShowToast = showToast;
+        window.pmCreateNode = function () {
+            if (!app.graph) {
+                showToast("⚠️ 工作流未初始化");
+                return;
+            }
+            const node = LiteGraph.createNode("PromptManagerNode");
+            if (!node) {
+                showToast("⚠️ 未找到节点类型: PromptManagerNode");
+                return;
+            }
+            node.pos = [window.scrollX + 200, window.scrollY + 200];
+            app.graph.add(node);
+            showToast("✅ 已添加节点");
+        };
     }
 });
