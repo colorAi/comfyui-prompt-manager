@@ -48,11 +48,11 @@ app.registerExtension({
             const options = filtered.map(p => `[${p.id.slice(-4)}] ${p.title}`);
             options.unshift("🎲 随机 (Random)");
             promptWidget.options.values = options;
-            
+
             // Smart Default: Keep existing if valid, else Random
             const currentVal = promptWidget.value;
             const isValid = currentVal && options.includes(currentVal) && currentVal !== "🎲 随机 (Random)" && currentVal !== "--- Select ---";
-            
+
             if (isValid) {
                 promptWidget.value = currentVal;
             } else {
@@ -86,16 +86,16 @@ app.registerExtension({
         // Event: Prompt Changed
         promptWidget.callback = (val) => {
             if (val === "🎲 随机 (Random)") {
-                 const category = categoryWidget.value;
-                 let filtered = allData.prompts;
-                 if (category && category !== "All") {
-                     filtered = filtered.filter(p => p.category === category);
-                 }
-                 if (filtered.length > 0) {
+                const category = categoryWidget.value;
+                let filtered = allData.prompts;
+                if (category && category !== "All") {
+                    filtered = filtered.filter(p => p.category === category);
+                }
+                if (filtered.length > 0) {
                     const randomP = filtered[Math.floor(Math.random() * filtered.length)];
                     contentWidget.value = randomP.content;
-                 }
-                 return;
+                }
+                return;
             }
 
             const p = getPromptFromValue(val);
@@ -184,7 +184,41 @@ app.registerExtension({
             }
         });
 
+        // Helper: Pick random prompt and update content
+        const pickRandomPrompt = () => {
+            const category = categoryWidget.value;
+            let filtered = allData.prompts;
+            if (category && category !== "All") {
+                filtered = filtered.filter(p => p.category === category);
+            }
+            if (filtered.length > 0) {
+                const randomP = filtered[Math.floor(Math.random() * filtered.length)];
+                contentWidget.value = randomP.content;
+            }
+        };
+
+        // Add method to node for external triggering (used by queuePrompt hook)
+        node.triggerRandomIfNeeded = function () {
+            if (promptWidget.value === "🎲 随机 (Random)") {
+                pickRandomPrompt();
+            }
+        };
+
         // Initial Fetch
         fetchData();
+    },
+
+    // Hook into app.queuePrompt to trigger random ONLY when workflow is run
+    setup() {
+        const origQueuePrompt = app.queuePrompt;
+        app.queuePrompt = async function (...args) {
+            // Find all PromptManagerNodes and trigger random
+            for (const node of app.graph._nodes) {
+                if (node.comfyClass === "PromptManagerNode" && node.triggerRandomIfNeeded) {
+                    node.triggerRandomIfNeeded();
+                }
+            }
+            return origQueuePrompt.apply(this, args);
+        };
     }
 });
