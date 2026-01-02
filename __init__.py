@@ -292,7 +292,7 @@ class PromptManagerNode:
 
     # Bypass strict validation because the lists are dynamic on the frontend
     @classmethod
-    def VALIDATE_INPUTS(cls, input_types):
+    def VALIDATE_INPUTS(cls, **kwargs):
         return True
 
     def get_content(self, category, prompt, content):
